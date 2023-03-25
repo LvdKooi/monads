@@ -22,12 +22,14 @@ public class DiscountService {
 
     public BigDecimal determineDiscount(List<Product> products) {
         var discountPercentage = BigDecimal.ZERO;
+        var commission = BigDecimal.ZERO;
 
         for (var product : products) {
             discountPercentage = discountPercentage.add(determineDiscountPercentage(product));
+            commission = commission.add(product.getYearlyCommission());
         }
 
-        return discountPercentage;
+        return calculateDiscount(commission, discountPercentage);
     }
 
     private BigDecimal determineDiscountPercentage(Product product) {
