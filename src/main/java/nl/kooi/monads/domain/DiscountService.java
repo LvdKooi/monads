@@ -26,7 +26,7 @@ public class DiscountService {
 
         for (var product : products) {
             discountPercentage = discountPercentage.add(determineDiscountPercentage(product));
-            commission = commission.add(product.getYearlyCommission());
+            commission = commission.add(product.getYearlyCommission() == null ? BigDecimal.ZERO : product.getYearlyCommission());
         }
 
         return calculateDiscount(commission, discountPercentage);

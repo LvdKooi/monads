@@ -1,11 +1,13 @@
 package nl.kooi.monads.domain.product;
 
-import lombok.Getter;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-@Getter
+@Data
+@EqualsAndHashCode(callSuper = true)
 public class PensionProduct extends Product {
 
     private BigDecimal monthlyDeposit;
@@ -13,4 +15,9 @@ public class PensionProduct extends Product {
     private LocalDate endDate;
 
     private BigDecimal targetCapital;
+
+    @Override
+    public ProductType getProductType() {
+        return ProductType.PENSION;
+    }
 }
