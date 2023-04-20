@@ -39,6 +39,51 @@ public class DiscountServiceTest {
     }
 
     @Test
+    public void testDetermineDiscount_withPensionProduct_noEndDate() {
+        // Arrange
+        var pensionProduct = new PensionProduct();
+        pensionProduct.setStartDate(LocalDate.of(2000, 1, 1));
+        pensionProduct.setMonthlyDeposit(BigDecimal.valueOf(400));
+        pensionProduct.setYearlyCommission(BigDecimal.valueOf(100));
+
+        // Act
+        var discount = discountService.determineDiscount(List.of(pensionProduct));
+
+        // Assert
+        assertEquals(BigDecimal.valueOf(3), discount);
+    }
+    @Test
+    public void testDetermineDiscount_withPensionProduct_monthlyDepositLessThan300() {
+        // Arrange
+        var pensionProduct = new PensionProduct();
+        pensionProduct.setStartDate(LocalDate.of(2000, 1, 1));
+        pensionProduct.setEndDate(LocalDate.of(2022, 1, 1));
+        pensionProduct.setMonthlyDeposit(BigDecimal.valueOf(200));
+        pensionProduct.setYearlyCommission(BigDecimal.valueOf(100));
+
+        // Act
+        var discount = discountService.determineDiscount(List.of(pensionProduct));
+
+        // Assert
+        assertEquals(BigDecimal.valueOf(2), discount);
+    }
+
+    @Test
+    public void testDetermineDiscount_withPensionProduct_monthlyDepositLessThan300AndDurationShorterThan20Years() {
+        // Arrange
+        var pensionProduct = new PensionProduct();
+        pensionProduct.setStartDate(LocalDate.of(2000, 1, 1));
+        pensionProduct.setEndDate(LocalDate.of(2002, 1, 1));
+        pensionProduct.setMonthlyDeposit(BigDecimal.valueOf(200));
+        pensionProduct.setYearlyCommission(BigDecimal.valueOf(100));
+
+        // Act
+        var discount = discountService.determineDiscount(List.of(pensionProduct));
+
+        // Assert
+        assertEquals(BigDecimal.ZERO, discount);
+    }
+    @Test
     public void testDetermineDiscount_withMortgageProduct() {
         // Arrange
         var mortgageProduct = new MortgageProduct();
