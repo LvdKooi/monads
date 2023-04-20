@@ -1,10 +1,12 @@
 package nl.kooi.monads.domain.product;
 
-import lombok.Getter;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.math.BigDecimal;
 
-@Getter
+@Data
+@EqualsAndHashCode(callSuper = true)
 public class MortgageProduct extends Product {
     private BigDecimal monthlyPayment;
 
@@ -13,4 +15,9 @@ public class MortgageProduct extends Product {
     private Integer durationInMonths;
 
     private BigDecimal interest;
+
+    @Override
+    public ProductType getProductType() {
+        return ProductType.MORTGAGE;
+    }
 }
