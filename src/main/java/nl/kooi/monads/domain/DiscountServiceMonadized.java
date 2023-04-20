@@ -6,6 +6,7 @@ import nl.kooi.monads.domain.product.LifeInsuranceProduct;
 import nl.kooi.monads.domain.product.MortgageProduct;
 import nl.kooi.monads.domain.product.PensionProduct;
 import nl.kooi.monads.domain.product.Product;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -22,15 +23,19 @@ import static java.math.RoundingMode.HALF_UP;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class DiscountServiceMonadized {
+@Profile("monad")
+public class DiscountServiceMonadized implements DiscountApi {
 
+    @Override
     public BigDecimal determineDiscount(List<Product> products) {
         var discountPercentage = products.stream()
                 .map(this::determineDiscountPercentage)
+                .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         var commission = products.stream()
                 .map(Product::getYearlyCommission)
+                .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         return calculateDiscount(commission, discountPercentage);

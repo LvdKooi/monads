@@ -6,6 +6,7 @@ import nl.kooi.monads.domain.product.NonLifeInsurance;
 import nl.kooi.monads.domain.product.PensionProduct;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 import java.math.BigDecimal;
@@ -15,11 +16,12 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@SpringJUnitConfig(DiscountService.class)
+@SpringJUnitConfig(DiscountServiceMonadized.class)
+@ActiveProfiles("monad")
 public class DiscountServiceTest {
 
     @Autowired
-    private DiscountService discountService;
+    private DiscountApi discountService;
 
 
     @Test
