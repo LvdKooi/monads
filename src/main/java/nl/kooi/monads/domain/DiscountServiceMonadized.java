@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
 import static java.math.RoundingMode.HALF_UP;
@@ -91,15 +92,18 @@ public class DiscountServiceMonadized implements DiscountApi {
 
     private static BigDecimal determineMortgageDiscountPercentage(MortgageProduct product) {
         return Optional.ofNullable(product)
-                .filter(p -> p.getProductName().equals("ANNUITY") && p.getDurationInMonths() == 360)
-                .map(p -> BigDecimal.valueOf(0.01).multiply(BigDecimal.valueOf(p.getDurationInMonths())))
+                .filter(p -> p.getProductName().equals("ANNUITY"))
+                .filter(p -> p.getDurationInMonths() == 360)
+                .map(MortgageProduct::getDurationInMonths)
+                .map(duration -> BigDecimal.valueOf(duration)
+                        .multiply(BigDecimal.valueOf(0.01)))
                 .orElse(BigDecimal.ZERO);
     }
 
     private static BigDecimal determineLifeInsuranceDiscountPercentage(LifeInsuranceProduct product) {
         return Optional.ofNullable(product)
                 .filter(p -> Objects.nonNull(p.getInsuredAmount()))
-                .filter(p -> p.getInsuredAmount().compareTo(BigDecimal.valueOf(100_000L)) >= 1)
+                .filter(p -> isAtLeast(p::getInsuredAmount, 100_000L))
                 .filter(p -> Period.between(p.getBirthdateInsuredCustomer(), LocalDate.now()).getYears() > 20)
                 .map(p -> BigDecimal.valueOf(3))
                 .orElse(BigDecimal.ZERO);
@@ -117,6 +121,10 @@ public class DiscountServiceMonadized implements DiscountApi {
 
     private static Predicate<BigDecimal> isAtLeast(long amount) {
         return bd -> bd.compareTo(BigDecimal.valueOf(amount)) >= 0;
+    }
+
+    private static boolean isAtLeast(Supplier<BigDecimal> amountSupplier, long amount) {
+        return amountSupplier.get().compareTo(BigDecimal.valueOf(amount)) >= 1;
     }
 
     private static UnaryOperator<BigDecimal> maximizeAt(long amount) {
