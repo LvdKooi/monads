@@ -12,11 +12,12 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.Period;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
 import static java.math.RoundingMode.HALF_UP;
@@ -29,84 +30,129 @@ public class DiscountServiceMonadized implements DiscountApi {
 
     @Override
     public BigDecimal determineDiscount(List<Product> products) {
-        var discountPercentage = products.stream()
-                .map(this::determineDiscountPercentage)
-                .filter(Objects::nonNull)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        var commission = products.stream()
-                .map(Product::getYearlyCommission)
-                .filter(Objects::nonNull)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        return calculateDiscount(commission, discountPercentage);
+        return calculateDiscount(
+                determineCommission(products),
+                determineDiscountPercentage(products));
     }
 
-    private BigDecimal determineDiscountPercentage(Product product) {
-        switch (product.getProductType()) {
-            case PENSION -> {
-                return determinePensionDiscountPercentage((PensionProduct) product);
-            }
-            case MORTGAGE -> {
-                return determineMortgageDiscountPercentage((MortgageProduct) product);
-            }
-            case LIFE_INSURANCE -> {
-                return determineLifeInsuranceDiscountPercentage((LifeInsuranceProduct) product);
-            }
-            case NON_LIFE_INSURANCE -> {
-                return BigDecimal.ZERO;
-            }
-        }
+    private static BigDecimal determineDiscountPercentage(List<Product> products) {
+        return addAmounts(products, DiscountServiceMonadized::determineDiscountPercentage);
+    }
 
-        return null;
+    private static BigDecimal determineCommission(List<Product> products) {
+        return addAmounts(products, Product::getYearlyCommission);
+    }
+
+    private static BigDecimal addAmounts(List<Product> products, Function<Product, BigDecimal> amountFunction) {
+        return Optional.ofNullable(products)
+                .orElseGet(Collections::emptyList)
+                .stream()
+                .map(amountFunction)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private static BigDecimal determineDiscountPercentage(Product product) {
+        return switch (product.getProductType()) {
+            case PENSION -> determinePensionDiscountPercentage(product);
+            case MORTGAGE -> determineMortgageDiscountPercentage(product);
+            case LIFE_INSURANCE -> determineLifeInsuranceDiscountPercentage(product);
+            case NON_LIFE_INSURANCE -> BigDecimal.ZERO;
+        };
     }
 
     private static BigDecimal determinePensionDiscountPercentage(Product product) {
         return Optional.ofNullable(product)
-                .map(DiscountServiceMonadized::calculatePeriodRelatedDiscount)
-                .map(discount -> calculateMonthylDepositRelatedDiscount(discount, product))
-                .orElse(BigDecimal.ZERO);
-    }
-
-    private static BigDecimal calculateMonthylDepositRelatedDiscount(BigDecimal discount, Product product) {
-        return getPensionProductOptional(product)
-                .map(PensionProduct::getMonthlyDeposit)
-                .filter(isAtLeast(300))
-                .map(p -> BigDecimal.ONE)
-                .orElse(BigDecimal.ZERO)
-                .add(discount);
-    }
-
-    private static BigDecimal calculatePeriodRelatedDiscount(Product product) {
-        return getPensionProductOptional(product)
-                .filter(noEndDateOrOver20Years())
-                .map(p -> BigDecimal.valueOf(2))
-                .orElse(BigDecimal.ZERO);
-    }
-
-    private static Optional<PensionProduct> getPensionProductOptional(Product product) {
-        return Optional.ofNullable(product)
                 .filter(PensionProduct.class::isInstance)
-                .map(PensionProduct.class::cast);
+                .map(PensionProduct.class::cast)
+                .map(pensionProduct -> determineEndDateRelatedDiscount(pensionProduct)
+                        .add(determineMonthlyDepositRelatedDiscount(pensionProduct)))
+                .orElse(BigDecimal.ZERO);
     }
 
-    private static BigDecimal determineMortgageDiscountPercentage(MortgageProduct product) {
+    private static BigDecimal determineEndDateRelatedDiscount(PensionProduct product) {
         return Optional.ofNullable(product)
-                .filter(p -> p.getProductName().equals("ANNUITY"))
-                .filter(p -> p.getDurationInMonths() == 360)
+                .filter(hasDate(PensionProduct::getEndDate).negate().or(isEndDateMoreThan20YearsAfterStartDate()))
+                .map(isEligibleForDiscount -> BigDecimal.valueOf(2))
+                .orElse(BigDecimal.ZERO);
+    }
+
+    private static BigDecimal determineMonthlyDepositRelatedDiscount(PensionProduct product) {
+        return Optional.ofNullable(product)
+                .filter(isAmountAtLeast(PensionProduct::getMonthlyDeposit, 300))
+                .map(isEligibleForDiscount -> BigDecimal.ONE)
+                .orElse(BigDecimal.ZERO);
+    }
+
+    private static Predicate<PensionProduct> hasDate(Function<PensionProduct, LocalDate> dateFunction) {
+        return pension -> Optional.ofNullable(pension).map(dateFunction).isPresent();
+    }
+
+    private static Predicate<PensionProduct> isEndDateMoreThan20YearsAfterStartDate() {
+        return pension -> Optional.ofNullable(pension)
+                .filter(hasDate(PensionProduct::getStartDate))
+                .filter(hasDate(PensionProduct::getEndDate))
+                .filter(product -> Period.between(product.getStartDate(), product.getEndDate()).getYears() > 20)
+                .isPresent();
+    }
+
+    private static <T extends Product> Predicate<T> isAmountAtLeast(Function<T, BigDecimal> amountFunction,
+                                                                    int atLeast) {
+        return product -> Optional.ofNullable(product)
+                .map(amountFunction)
+                .filter(amount -> amount.compareTo(BigDecimal.valueOf(atLeast)) >= 0)
+                .isPresent();
+    }
+
+    private static BigDecimal determineLifeInsuranceDiscountPercentage(Product product) {
+        return determineLifeInsuranceBaseDiscount(product)
+                .add(determineAgeBaseLifeInsuranceDiscount(product));
+    }
+
+    private static BigDecimal determineLifeInsuranceBaseDiscount(Product product) {
+        return withLifeInsuranceEligibleForDiscounts(product)
+                .map(isEligibleForDiscount -> BigDecimal.ONE)
+                .orElse(BigDecimal.ZERO);
+    }
+
+    private static BigDecimal determineAgeBaseLifeInsuranceDiscount(Product product) {
+        return withLifeInsuranceEligibleForDiscounts(product)
+                .map(LifeInsuranceProduct::getBirthdateInsuredCustomer)
+                .map(isEligibleForDiscount -> BigDecimal.ONE)
+                .orElse(BigDecimal.ZERO);
+    }
+
+    private static Optional<LifeInsuranceProduct> withLifeInsuranceEligibleForDiscounts(Product product) {
+        return Optional.ofNullable(product)
+                .filter(LifeInsuranceProduct.class::isInstance)
+                .map(LifeInsuranceProduct.class::cast)
+                .filter(lifeInsurance -> Objects.nonNull(lifeInsurance.getInsuredAmount()))
+                .filter(isAmountAtLeast(LifeInsuranceProduct::getInsuredAmount, 300000));
+    }
+
+    private static BigDecimal determineMortgageDiscountPercentage(Product product) {
+        return Optional.ofNullable(product)
+                .filter(MortgageProduct.class::isInstance)
+                .map(MortgageProduct.class::cast)
+                .filter(isAnnuity().and(hasDurationOf360Months()))
                 .map(MortgageProduct::getDurationInMonths)
-                .map(duration -> BigDecimal.valueOf(duration)
-                        .multiply(BigDecimal.valueOf(0.01)))
+                .map(BigDecimal::valueOf)
+                .map(BigDecimal.valueOf(0.01)::multiply)
                 .orElse(BigDecimal.ZERO);
     }
 
-    private static BigDecimal determineLifeInsuranceDiscountPercentage(LifeInsuranceProduct product) {
-        return Optional.ofNullable(product)
-                .filter(p -> Objects.nonNull(p.getInsuredAmount()))
-                .filter(p -> isAtLeast(p::getInsuredAmount, 100_000L))
-                .filter(p -> Period.between(p.getBirthdateInsuredCustomer(), LocalDate.now()).getYears() > 20)
-                .map(p -> BigDecimal.valueOf(3))
-                .orElse(BigDecimal.ZERO);
+    private static Predicate<MortgageProduct> isAnnuity() {
+        return mortgage -> Optional.ofNullable(mortgage)
+                .map(MortgageProduct::getProductName)
+                .map("ANNUITY"::equals)
+                .orElse(false);
+    }
+
+    private static Predicate<MortgageProduct> hasDurationOf360Months() {
+        return mortgageProduct -> Optional.ofNullable(mortgageProduct)
+                .map(MortgageProduct::getDurationInMonths)
+                .map(Integer.valueOf(360)::equals)
+                .orElse(false);
     }
 
     private static BigDecimal calculateDiscount(BigDecimal amount, BigDecimal discountPercentage) {
@@ -123,10 +169,6 @@ public class DiscountServiceMonadized implements DiscountApi {
         return bd -> bd.compareTo(BigDecimal.valueOf(amount)) >= 0;
     }
 
-    private static boolean isAtLeast(Supplier<BigDecimal> amountSupplier, long amount) {
-        return amountSupplier.get().compareTo(BigDecimal.valueOf(amount)) >= 1;
-    }
-
     private static UnaryOperator<BigDecimal> maximizeAt(long amount) {
         return bd -> bd.min(BigDecimal.valueOf(amount));
     }
@@ -141,10 +183,6 @@ public class DiscountServiceMonadized implements DiscountApi {
 
     private static UnaryOperator<BigDecimal> multiplyBy(BigDecimal amount) {
         return bd -> Optional.ofNullable(amount).orElse(BigDecimal.ONE).multiply(bd);
-    }
-
-    private static Predicate<PensionProduct> noEndDateOrOver20Years() {
-        return p -> p.getEndDate() == null || (Period.between(p.getStartDate(), p.getEndDate()).getYears() > 20);
     }
 }
 
