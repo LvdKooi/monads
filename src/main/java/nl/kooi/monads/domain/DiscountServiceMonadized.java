@@ -84,7 +84,7 @@ public class DiscountServiceMonadized implements DiscountApi {
                 .orElse(BigDecimal.ZERO);
     }
 
-    private static Predicate<PensionProduct> hasDate(Function<PensionProduct, LocalDate> dateFunction) {
+    private static <T extends Product> Predicate<T> hasDate(Function<T, LocalDate> dateFunction) {
         return pension -> Optional.ofNullable(pension).map(dateFunction).isPresent();
     }
 
@@ -92,7 +92,15 @@ public class DiscountServiceMonadized implements DiscountApi {
         return pension -> Optional.ofNullable(pension)
                 .filter(hasDate(PensionProduct::getStartDate))
                 .filter(hasDate(PensionProduct::getEndDate))
-                .filter(product -> Period.between(product.getStartDate(), product.getEndDate()).getYears() > 20)
+                .filter(isEndDateMoreThanGivenYearsAfterStartDate(PensionProduct::getStartDate, PensionProduct::getEndDate, 20))
+                .isPresent();
+    }
+
+    private static <T extends Product> Predicate<T> isEndDateMoreThanGivenYearsAfterStartDate(Function<T, LocalDate> firstDate, Function<T, LocalDate> secondDate, int moreThan) {
+        return product -> Optional.ofNullable(product)
+                .filter(hasDate(firstDate))
+                .filter(hasDate(secondDate))
+                .filter(pr -> Period.between(firstDate.apply(pr), secondDate.apply(pr)).getYears() > moreThan)
                 .isPresent();
     }
 
@@ -117,9 +125,15 @@ public class DiscountServiceMonadized implements DiscountApi {
 
     private static BigDecimal determineAgeBaseLifeInsuranceDiscount(Product product) {
         return withLifeInsuranceEligibleForDiscounts(product)
-                .map(LifeInsuranceProduct::getBirthdateInsuredCustomer)
-                .map(isEligibleForDiscount -> BigDecimal.ONE)
+                .filter(isCustomerAtLeast20Years())
+                .map(isEligibleForDiscount -> BigDecimal.valueOf(3))
                 .orElse(BigDecimal.ZERO);
+    }
+
+    private static Predicate<LifeInsuranceProduct> isCustomerAtLeast20Years() {
+        return isEndDateMoreThanGivenYearsAfterStartDate(LifeInsuranceProduct::getBirthdateInsuredCustomer,
+                p -> LocalDate.now(),
+                20);
     }
 
     private static Optional<LifeInsuranceProduct> withLifeInsuranceEligibleForDiscounts(Product product) {
