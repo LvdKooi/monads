@@ -62,7 +62,7 @@ public class DiscountService implements DiscountApi {
                 discountPercentage = discountPercentage.add(BigDecimal.valueOf(2));
             }
 
-            if (product.getMonthlyDeposit().compareTo(BigDecimal.valueOf(300)) >= 1) {
+            if (product.getMonthlyDeposit().compareTo(BigDecimal.valueOf(300)) >= 0) {
                 discountPercentage = discountPercentage.add(BigDecimal.valueOf(1));
             }
         }
@@ -84,7 +84,7 @@ public class DiscountService implements DiscountApi {
     }
 
     private static BigDecimal determineLifeInsuranceDiscountPercentage(LifeInsuranceProduct product) {
-        if (product != null && product.getInsuredAmount() != null && product.getInsuredAmount().compareTo(BigDecimal.valueOf(100_000L)) >= 1) {
+        if (product != null && product.getInsuredAmount() != null && product.getInsuredAmount().compareTo(BigDecimal.valueOf(100_000L)) >= 0) {
 
             if (Period.between(product.getBirthdateInsuredCustomer(), LocalDate.now()).getYears() > 20) {
                 return BigDecimal.valueOf(3);
