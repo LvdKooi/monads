@@ -81,7 +81,7 @@ public class DiscountService {
     }
 
     private static BigDecimal determineLifeInsuranceDiscountPercentage(LifeInsuranceProduct product) {
-        if (product != null && product.getInsuredAmount() != null && product.getInsuredAmount().compareTo(BigDecimal.valueOf(100_000L)) >= 0) {
+        if (product != null && product.getInsuredAmount() != null && product.getInsuredAmount().compareTo(BigDecimal.valueOf(100_000L)) >= 0 ) {
 
             if (Period.between(product.getBirthdateInsuredCustomer(), LocalDate.now()).getYears() > 20) {
                 return BigDecimal.valueOf(3);
