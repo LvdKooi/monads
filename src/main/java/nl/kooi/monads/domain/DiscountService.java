@@ -34,18 +34,17 @@ public class DiscountService {
 
     private BigDecimal determineDiscountPercentage(Product product) {
         switch (product.getProductType()) {
-            case PENSION -> {
+            case PENSION:
                 return determinePensionDiscountPercentage((PensionProduct) product);
-            }
-            case MORTGAGE -> {
+
+            case MORTGAGE:
                 return determineMortgageDiscountPercentage((MortgageProduct) product);
-            }
-            case LIFE_INSURANCE -> {
+
+            case LIFE_INSURANCE:
                 return determineLifeInsuranceDiscountPercentage((LifeInsuranceProduct) product);
-            }
-            case NON_LIFE_INSURANCE -> {
+
+            case NON_LIFE_INSURANCE:
                 return BigDecimal.ZERO;
-            }
         }
 
         return null;
@@ -81,7 +80,7 @@ public class DiscountService {
     }
 
     private static BigDecimal determineLifeInsuranceDiscountPercentage(LifeInsuranceProduct product) {
-        if (product != null && product.getInsuredAmount() != null && product.getInsuredAmount().compareTo(BigDecimal.valueOf(100_000L)) >= 0 ) {
+        if (product != null && product.getInsuredAmount() != null && product.getInsuredAmount().compareTo(BigDecimal.valueOf(100_000L)) >= 0) {
 
             if (Period.between(product.getBirthdateInsuredCustomer(), LocalDate.now()).getYears() > 20) {
                 return BigDecimal.valueOf(3);
