@@ -10,6 +10,7 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,7 +22,6 @@ class DiscountServiceTests {
     @Autowired
     private DiscountService discountService;
 
-
     @Test
     void allProductsAreEligibleForMaximumDiscount() {
         var productsList = List.of(createPensionProduct(21, 300),
@@ -30,6 +30,11 @@ class DiscountServiceTests {
                 createNonLifeInsurance());
 
         assertThat(discountService.determineDiscount(productsList)).isEqualTo(BigDecimal.valueOf(96).setScale(2, RoundingMode.HALF_UP));
+    }
+
+    @Test
+    void emptyListOfProductsReturnsZero() {
+        assertThat(discountService.determineDiscount(Collections.emptyList())).isEqualTo(BigDecimal.ZERO);
     }
 
     @Nested
@@ -75,7 +80,6 @@ class DiscountServiceTests {
 
             assertThat(discountService.determineDiscount(List.of(pension))).isEqualTo(BigDecimal.ZERO);
         }
-
     }
 
     @Nested
