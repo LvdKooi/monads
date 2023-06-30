@@ -1,7 +1,6 @@
 package nl.kooi.monads.domain;
 
 import nl.kooi.monads.domain.product.LifeInsuranceProduct;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,12 +13,8 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 public class LifeInsuranceDiscountTests {
 
-    private DiscountService discountService;
+    private final DiscountService discountService = new DiscountService();
 
-    @BeforeEach
-    void setUp() {
-        discountService = new DiscountService();
-    }
 
     @Test
     @DisplayName("When customer was 21 year at startdate of product, and has an insured amount larger than 100K then the discountperentage is 3%.")
