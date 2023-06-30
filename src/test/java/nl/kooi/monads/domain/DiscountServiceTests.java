@@ -1,11 +1,11 @@
 package nl.kooi.monads.domain;
 
-import nl.kooi.monads.domain.product.LifeInsuranceProduct;
-import nl.kooi.monads.domain.product.MortgageProduct;
-import nl.kooi.monads.domain.product.PensionProduct;
+import nl.kooi.monads.domain.product.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -15,9 +15,22 @@ import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-public class DiscountServiceTests {
+@SpringJUnitConfig(DiscountService.class)
+class DiscountServiceTests {
 
-    private final DiscountService discountService = new DiscountService();
+    @Autowired
+    private DiscountService discountService;
+
+
+    @Test
+    void allProductsAreEligibleForMaximumDiscount() {
+        var productsList = List.of(createPensionProduct(21, 300),
+                createMortgageProduct("ANNUITY", 360),
+                createLifeInsurance(21, 500, 150000),
+                createNonLifeInsurance());
+
+        assertThat(discountService.determineDiscount(productsList)).isEqualTo(BigDecimal.valueOf(96).setScale(2, RoundingMode.HALF_UP));
+    }
 
     @Nested
     @DisplayName("Pension Tests")
@@ -63,9 +76,6 @@ public class DiscountServiceTests {
             assertThat(discountService.determineDiscount(List.of(pension))).isEqualTo(BigDecimal.ZERO);
         }
 
-        private static PensionProduct createPensionProduct(Integer durationInYears, Integer monthlyDeposit) {
-            return new PensionProduct("pension", LocalDate.now(), BigDecimal.valueOf(1000), BigDecimal.valueOf(monthlyDeposit), Optional.ofNullable(durationInYears).map(LocalDate.now()::plusYears).orElse(null), BigDecimal.valueOf(500000));
-        }
     }
 
     @Nested
@@ -100,10 +110,6 @@ public class DiscountServiceTests {
 
             // // discount percentage (0%) * yearly commission (500) = 0
             assertThat(discountService.determineDiscount(List.of(mortgage))).isEqualTo(BigDecimal.ZERO);
-        }
-
-        private static MortgageProduct createMortgageProduct(String productName, int durationInMonths) {
-            return new MortgageProduct(productName, LocalDate.now(), BigDecimal.valueOf(500), BigDecimal.valueOf(100), BigDecimal.valueOf(150), durationInMonths, BigDecimal.ONE);
         }
     }
 
@@ -155,9 +161,34 @@ public class DiscountServiceTests {
             // discount percentage (0%) * yearly commission (500) = 0
             assertThat(discountService.determineDiscount(List.of(lifeInsurance))).isEqualTo(BigDecimal.valueOf(0));
         }
+    }
 
-        private static LifeInsuranceProduct createLifeInsurance(int ageCustomerAtStartDate, Integer yearlyCommission, Integer insuredAmount) {
-            return new LifeInsuranceProduct("lifeInsurance", LocalDate.now(), Optional.ofNullable(yearlyCommission).map(BigDecimal::valueOf).orElse(null), Optional.ofNullable(insuredAmount).map(BigDecimal::valueOf).orElse(null), LocalDate.now().minusYears(ageCustomerAtStartDate));
+    @Nested
+    @DisplayName("Non Life Insurance Tests")
+    class NonLifeInsuranceDiscountTests {
+
+        @Test
+        @DisplayName("Non Life Insurances are never eligible for a discount")
+        void nonLifeInsuranceIsNeverEligibleForADiscount() {
+            var nonLifeProduct = createNonLifeInsurance();
+
+            assertThat(discountService.determineDiscount(List.of(nonLifeProduct))).isEqualTo(BigDecimal.ZERO);
         }
+    }
+
+    private static Product createPensionProduct(Integer durationInYears, Integer monthlyDeposit) {
+        return new PensionProduct("pension", LocalDate.now(), BigDecimal.valueOf(1000), BigDecimal.valueOf(monthlyDeposit), Optional.ofNullable(durationInYears).map(LocalDate.now()::plusYears).orElse(null), BigDecimal.valueOf(500000));
+    }
+
+    private static Product createMortgageProduct(String productName, int durationInMonths) {
+        return new MortgageProduct(productName, LocalDate.now(), BigDecimal.valueOf(500), BigDecimal.valueOf(100), BigDecimal.valueOf(150), durationInMonths, BigDecimal.ONE);
+    }
+
+    private static Product createLifeInsurance(int ageCustomerAtStartDate, Integer yearlyCommission, Integer insuredAmount) {
+        return new LifeInsuranceProduct("lifeInsurance", LocalDate.now(), Optional.ofNullable(yearlyCommission).map(BigDecimal::valueOf).orElse(null), Optional.ofNullable(insuredAmount).map(BigDecimal::valueOf).orElse(null), LocalDate.now().minusYears(ageCustomerAtStartDate));
+    }
+
+    private static Product createNonLifeInsurance() {
+        return new NonLifeInsurance("NL", LocalDate.now(), BigDecimal.valueOf(500), BigDecimal.valueOf(130));
     }
 }
