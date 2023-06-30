@@ -5,6 +5,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 import java.math.BigDecimal;
@@ -16,11 +17,19 @@ import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-@SpringJUnitConfig(DiscountService.class)
+@SpringJUnitConfig({DiscountService.class, DiscountServiceMonadized.class})
+
+//        Uncomment the profile you want to run -> "monadless" runs the tests while injecting DiscountService
+//                                                 "monad" runs the tests while inject DiscountServiceMonadized
+
+@ActiveProfiles(
+//        "monadless"
+        "monad"
+)
 class DiscountServiceTests {
 
     @Autowired
-    private DiscountService discountService;
+    private DiscountApi discountService;
 
     @Test
     void allProductsAreEligibleForMaximumDiscount() {

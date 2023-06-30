@@ -19,7 +19,7 @@ import static java.math.RoundingMode.HALF_UP;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Profile("without")
+@Profile("monadless")
 public class DiscountService implements DiscountApi {
 
     @Override
