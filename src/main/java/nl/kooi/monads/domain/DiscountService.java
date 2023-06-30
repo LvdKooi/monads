@@ -26,14 +26,14 @@ public class DiscountService {
 
         for (var product : products) {
             discountPercentage = discountPercentage.add(determineDiscountPercentage(product));
-            commission = commission.add(product.getYearlyCommission() == null ? BigDecimal.ZERO : product.getYearlyCommission());
+            commission = commission.add(product.yearlyCommission() == null ? BigDecimal.ZERO : product.yearlyCommission());
         }
 
         return calculateDiscount(commission, discountPercentage);
     }
 
     private BigDecimal determineDiscountPercentage(Product product) {
-        switch (product.getProductType()) {
+        switch (product.productType()) {
             case PENSION:
                 return determinePensionDiscountPercentage((PensionProduct) product);
 
@@ -54,11 +54,11 @@ public class DiscountService {
         var discountPercentage = BigDecimal.ZERO;
 
         if (product != null) {
-            if (product.getEndDate() == null || (Period.between(product.getStartDate(), product.getEndDate()).getYears() > 20)) {
+            if (product.endDate() == null || (Period.between(product.startDate(), product.endDate()).getYears() > 20)) {
                 discountPercentage = discountPercentage.add(BigDecimal.valueOf(2));
             }
 
-            if (product.getMonthlyDeposit().compareTo(BigDecimal.valueOf(300)) >= 0) {
+            if (product.monthlyDeposit().compareTo(BigDecimal.valueOf(300)) >= 0) {
                 discountPercentage = discountPercentage.add(BigDecimal.valueOf(1));
             }
         }
@@ -70,9 +70,9 @@ public class DiscountService {
         var discountPercentage = BigDecimal.ZERO;
 
         if (product != null) {
-            if (product.getProductName().equals("ANNUITY") && product.getDurationInMonths() == 360) {
+            if (product.productName().equals("ANNUITY") && product.durationInMonths() == 360) {
                 discountPercentage = discountPercentage.add(BigDecimal.valueOf(0.01)
-                        .multiply(BigDecimal.valueOf(product.getDurationInMonths())));
+                        .multiply(BigDecimal.valueOf(product.durationInMonths())));
             }
         }
 
@@ -80,9 +80,9 @@ public class DiscountService {
     }
 
     private static BigDecimal determineLifeInsuranceDiscountPercentage(LifeInsuranceProduct product) {
-        if (product != null && product.getInsuredAmount() != null && product.getInsuredAmount().compareTo(BigDecimal.valueOf(100_000L)) >= 0) {
+        if (product != null && product.insuredAmount() != null && product.insuredAmount().compareTo(BigDecimal.valueOf(100_000L)) >= 0) {
 
-            if (Period.between(product.getBirthdateInsuredCustomer(), LocalDate.now()).getYears() > 20) {
+            if (Period.between(product.birthdateInsuredCustomer(), LocalDate.now()).getYears() > 20) {
                 return BigDecimal.valueOf(3);
             }
 

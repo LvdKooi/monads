@@ -1,18 +1,17 @@
 package nl.kooi.monads.domain.product;
 
-import lombok.Data;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
-@Data
-public abstract class Product {
-    private UUID productReference;
-    private String productName;
-    private LocalDate startDate;
+public interface Product {
+    UUID productReference();
 
-    private BigDecimal yearlyCommission;
+    String productName();
 
-    public abstract ProductType getProductType();
+    LocalDate startDate();
+
+    BigDecimal yearlyCommission();
+
+    ProductType productType();
 }

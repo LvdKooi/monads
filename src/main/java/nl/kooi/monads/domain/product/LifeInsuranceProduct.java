@@ -1,21 +1,18 @@
 package nl.kooi.monads.domain.product;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.UUID;
 
-@Data
-@EqualsAndHashCode(callSuper = true)
-public class LifeInsuranceProduct extends Product {
-
-    private BigDecimal insuredAmount;
-
-    private LocalDate birthdateInsuredCustomer;
+public record LifeInsuranceProduct(UUID productReference,
+                                   String productName,
+                                   LocalDate startDate,
+                                   BigDecimal yearlyCommission,
+                                   BigDecimal insuredAmount,
+                                   LocalDate birthdateInsuredCustomer) implements Product {
 
     @Override
-    public ProductType getProductType() {
+    public ProductType productType() {
         return ProductType.LIFE_INSURANCE;
     }
 }
