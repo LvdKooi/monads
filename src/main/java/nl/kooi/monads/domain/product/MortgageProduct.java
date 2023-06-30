@@ -1,23 +1,21 @@
 package nl.kooi.monads.domain.product;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.UUID;
 
-@Data
-@EqualsAndHashCode(callSuper = true)
-public class MortgageProduct extends Product {
-    private BigDecimal monthlyPayment;
 
-    private BigDecimal monthlySavingsAmount;
-
-    private Integer durationInMonths;
-
-    private BigDecimal interest;
+public record MortgageProduct(UUID productReference,
+                              String productName,
+                              LocalDate startDate,
+                              BigDecimal yearlyCommission,
+                              BigDecimal monthlyPayment,
+                              BigDecimal monthlySavingsAmount,
+                              Integer durationInMonths,
+                              BigDecimal interest) implements Product {
 
     @Override
-    public ProductType getProductType() {
+    public ProductType productType() {
         return ProductType.MORTGAGE;
     }
 }
