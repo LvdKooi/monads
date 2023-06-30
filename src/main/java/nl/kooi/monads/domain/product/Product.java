@@ -5,7 +5,6 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 public interface Product {
-    UUID productReference();
 
     String productName();
 

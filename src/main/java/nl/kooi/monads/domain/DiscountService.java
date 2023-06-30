@@ -37,18 +37,17 @@ public class DiscountService implements DiscountApi {
 
     private BigDecimal determineDiscountPercentage(Product product) {
         switch (product.productType()) {
-            case PENSION -> {
+            case PENSION:
                 return determinePensionDiscountPercentage((PensionProduct) product);
-            }
-            case MORTGAGE -> {
+
+            case MORTGAGE:
                 return determineMortgageDiscountPercentage((MortgageProduct) product);
-            }
-            case LIFE_INSURANCE -> {
+
+            case LIFE_INSURANCE:
                 return determineLifeInsuranceDiscountPercentage((LifeInsuranceProduct) product);
-            }
-            case NON_LIFE_INSURANCE -> {
+
+            case NON_LIFE_INSURANCE:
                 return BigDecimal.ZERO;
-            }
         }
 
         return null;

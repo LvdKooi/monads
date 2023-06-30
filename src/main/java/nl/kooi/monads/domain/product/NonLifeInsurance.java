@@ -2,11 +2,9 @@ package nl.kooi.monads.domain.product;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.UUID;
 
 
-public record NonLifeInsurance(UUID productReference,
-                               String productName,
+public record NonLifeInsurance(String productName,
                                LocalDate startDate,
                                BigDecimal yearlyCommission,
                                BigDecimal monthlyPremium) implements Product {
