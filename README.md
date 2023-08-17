@@ -1,5 +1,5 @@
 # Monads
-A demo repository to show the power of Monadic style coding. This repo is part of my tech talk: Feng Shui your Java projects with Monadic style coding.
+A demo repository to show the power of Monadic style coding. This repo is part of my tech talk: **Feng Shui your Java projects with Monadic style coding**.
 
 ## Context
 This repo is in the context of a fictional company that operates in the financial services industry. The company offers a variety of financial products, including life insurance, mortgages, pension plans, as well as non-life insurance options such as travel, car, and fire insurance.
