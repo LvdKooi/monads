@@ -24,7 +24,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 @ActiveProfiles(
 //        "monadless"
-        "monad"
+        "monadic"
 )
 class DiscountServiceTests {
 

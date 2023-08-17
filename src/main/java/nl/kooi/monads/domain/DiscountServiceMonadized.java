@@ -24,7 +24,7 @@ import static nl.kooi.monads.util.ProductUtils.*;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Profile("monad")
+@Profile("monadic")
 public class DiscountServiceMonadized implements DiscountApi {
 
     @Override
