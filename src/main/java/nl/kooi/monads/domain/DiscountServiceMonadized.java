@@ -1,7 +1,6 @@
 package nl.kooi.monads.domain;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import nl.kooi.monads.domain.product.LifeInsuranceProduct;
 import nl.kooi.monads.domain.product.MortgageProduct;
 import nl.kooi.monads.domain.product.PensionProduct;
@@ -23,7 +22,6 @@ import static nl.kooi.monads.util.ProductUtils.*;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 @Profile("monadic")
 public class DiscountServiceMonadized implements DiscountApi {
 

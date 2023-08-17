@@ -1,7 +1,6 @@
 package nl.kooi.monads.domain;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import nl.kooi.monads.domain.product.LifeInsuranceProduct;
 import nl.kooi.monads.domain.product.MortgageProduct;
 import nl.kooi.monads.domain.product.PensionProduct;
@@ -18,7 +17,6 @@ import static java.math.RoundingMode.HALF_UP;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 @Profile("monadless")
 public class DiscountService implements DiscountApi {
 
